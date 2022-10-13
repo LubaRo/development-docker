@@ -1,9 +1,9 @@
 version: "3.1"
-services:
 
-  mysql5.7:
+services:
+  mysql:
     image: mysql:5.7
-    container_name: mysql5.7
+    container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
     volumes:
@@ -17,14 +17,14 @@ services:
     working_dir: /etc/nginx
     volumes:
       - ./app:/app
-      - ./config/nginx:/etc/nginx/conf.d
+      - ./config/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - "80:80"
+      - "${CSCART_PORT}:80"
       - "443:443"
-    depends_on:
-      - php7.3
-      - php7.4
-      - php8.0
+    # depends_on:
+    #   - php7.3
+    #   - php7.4
+    #   - php8.0
 
   php7.3:
     build:
@@ -38,6 +38,7 @@ services:
       - ./bin/sendmail:/usr/local/bin/sendmail
     environment:
         PHP_IDE_CONFIG: serverName=localhost
+        CSCART_HOST: "php7.3.cs-cart.local:${CSCART_PORT}"
 
   php7.4:
     build:
@@ -51,6 +52,13 @@ services:
       - ./bin/sendmail:/usr/local/bin/sendmail
     environment:
         PHP_IDE_CONFIG: serverName=localhost
+        CSCART_HOST: "php7.4.cs-cart.local:${CSCART_PORT}"
+        XDEBUG_MODE: develop,debug
+        XDEBUG_CONFIG:
+          client_host=host.docker.internal
+          start_with_request=yes
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   php8.0:
     build:
@@ -64,6 +72,28 @@ services:
       - ./bin/sendmail:/usr/local/bin/sendmail
     environment:
         PHP_IDE_CONFIG: serverName=localhost
+        CSCART_HOST: "php8.0.cs-cart.local:${CSCART_PORT}"
+
+  pma:
+    image: phpmyadmin/phpmyadmin:latest
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    restart: always
+    ports:
+      - 8081:80
+
+  mailhog:
+    image: mailhog/mailhog
+    logging:
+      driver: 'none'  # disable saving logs
+    ports:
+      - 1025:1025 # smtp server
+      - 8025:8025 # web ui
 
 # Change default subnet addresses (for uncomment - delete only '#'):
 #networks:

@@ -5,109 +5,6 @@ CS-Cart Development Environment
 .. contents::
    :local:
 
-==============
-English manual
-==============
-
-Docker-based development environment:
-
-* PHP versions: 8.0, 7.4 and 7.3.
-* MySQL 5.7 database server.
-* nginx web server.
-
-------------
-Installation
-------------
-
-#. Install ``git``, ``docker`` and ``docker-compose``.
-#. Clone the environment repository:
-
-    .. code-block:: bash
-
-        $ git clone git@github.com:cscart/development-docker.git ~/srv
-        $ cd ~/srv
-
-#. Create the directory to store CS-Cart files:
-
-    .. code-block:: bash
-
-        $ mkdir -p app/www
-
-#. Clone CS-Cart repository or unpack the distribution archive into the ``app/www`` directory.
-#. Enable the default application config for nginx:
-
-    .. code-block:: bash
-
-        $ cp config/nginx/app.conf.example config/nginx/app.conf
-
-#. Run application containers:
-
-    .. code-block:: bash
-
-        $ make -f Makefile run
-
-----------------
-MySQL connection
-----------------
-        
-* DB host: mysql5.7.
-* User: root.
-* Password: root. 
-
-
------------------------------------
-Working with different PHP versions
------------------------------------
-
-PHP 7.4 is used by default.
-
-To use the specific PHP version for your requests, add the following prefix to the domain you request:
-
-* ``php7.3.`` for PHP 7.3.
-* ``php7.4.`` for PHP 7.4.
-* ``php8.0.`` for PHP 8.0.
-
----------------
-Sending e-mails
----------------
-
-PHP containers do not send actual e-mails when using the ``mail()`` function.
-
-All sent emails will be caught and stored in the ``app/log/sendmail`` directory.
-
-----------------------------------
-Working with multiple applications
-----------------------------------
-
-See comments in the ``config/nginx/app.conf.example`` file if you need to host multiple PHP applications inside single Docker PHP container.
-
-----------------------------------
-Enabling xDebug for PHP containers
-----------------------------------
-
-xDebug 3 is already configured for PHP7 and PHP8 containers. All you have to do is to uncomment the extension installation in the ``config/php*/Dockerfile`` files.
-
-You can read about configuring PHPStorm to work with Docker and xDebug 3 in the `"Debugging PHP" <https://thecodingmachine.io/configuring-xdebug-phpstorm-docker>`_ article.
-
-------------------------
-Configuring the Docker subnet
-------------------------
-
-Docker-compose creates a subnet with addresses by default 172.18.[0-255].[0-255].
-
-If you run docker locally with a default subnet, then resources using the same addresses will be unavailable - the response will be returned by the local subnet, not the required resource.
-
-To fix the problem, you need to change the address of the docker subnet.
-
-In the docker-compose file.bml shows an example of replacing addresses with 10.10.[0-255].[0-255].
-
-Uncomment the lines in docker-compose.yml and run the following commands:
-
-    .. code-block:: bash
-
-        $ docker network rm $(docker network ls -q)
-        $ docker-compose down && docker-compose up -d
-
 ==================
 Русская инструкция
 ==================
@@ -123,39 +20,43 @@ Uncomment the lines in docker-compose.yml and run the following commands:
 ---------
 
 #. Установите ``git``, ``docker`` and ``docker-compose``.
-#. Склонируйте репозиторий с окружением:
+#. Склонируйте репозиторий.
+
+#. Создайте папку для файлов CS-Cart в `app/www`:
 
     .. code-block:: bash
 
-        $ git clone git@github.com:cscart/development-docker.git ~/srv
-        $ cd ~/srv
+        mkdir -p app/www
 
-#. Создайте папку для файлов CS-Cart:
-
-    .. code-block:: bash
-
-        $ mkdir -p app/www
-
-#. Склонируйте репозиторий CS-Cart или распакуйте дистрибутив в папку ``app/www``.
+#. Теперь папка ``app/www`` - корневая папка сервера. Там будут размещаться файлы CS-Cart.
 #. Включите приложение со стандартным конфигом nginx:
 
     .. code-block:: bash
 
-        $ cp config/nginx/app.conf.example config/nginx/app.conf
+        cp config/nginx/app.conf.example config/nginx/app.conf
 
 #. Запустите контейнеры приложения:
 
     .. code-block:: bash
 
-        $ make -f Makefile run
+        make run
+
+        # или можно вручную запустить только одну версию php с нужным набором сервисов: 
+        docker-compose up --build php7.4 nginx mysql pma mailhog --- поднять все необходимое с одной версией php
+
+#. Запустить bash php-контейнера:
+
+    .. code-block::
+
+        make cli-7.4
 
 -------------------
 Подключение к MySQL
 -------------------
         
-* Хост БД: mysql5.7.
-* Пользователь: root.
-* Пароль: root.
+* Хост БД: mysql5.7
+* Пользователь: root
+* Пароль: root
 
 -----------------------------
 Работа с разными версиями PHP
@@ -175,7 +76,14 @@ Uncomment the lines in docker-compose.yml and run the following commands:
 
 PHP по умолчанию не отправляют настоящих писем при вызове функции ``mail()``.
 
-Все исходящие e-mail'ы перехватываются и пишутся в папку ``app/log/sendmail``.
+Все исходящие e-mail'ы перехватываются и пишутся в папку ``app/log/sendmail``. # отрабатывает скрипт из ./bin/sendmail
+
+Можно перехватывать письма с помощью MailHog для этого в настройках магазина в админке  `Настройки -> Электронная почта` выбрать:
+
+```
+    Способ отправки -> через SMTP сервер
+    SMTP сервер     -> mailhog:1025      # (контейнер mailhog)
+```
 
 ---------------------------------
 Работа с несколькими приложениями
