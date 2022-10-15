@@ -1,5 +1,5 @@
 run:
-	docker-compose up -d --build nginx mysql5.7 php8.0 php7.4 php7.3 pma mailhog
+	docker-compose up -d --build nginx mysql php8.0 php7.4 php7.3 pma mailhog
 
 cli-7.3:
 	docker exec -it php7.3 bash
